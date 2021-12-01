@@ -1,0 +1,140 @@
+<!-- Author: Laxminarayan Chandrashekar -->
+<!-- POC to show creation of different facial expression curves using D3 and mock variable data points -->
+<!-- Added both styles and script to this html for quick demo -->
+<!-- Just needs D3.JS to run. No other external server/dependencies required to run this demo -->
+
+<!DOCTYPE html>
+<html lang="eng">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <title>D3 Curve POC</title>
+    <!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.1.1/d3.min.js"
+        integrity="sha512-COTaPOlz12cG4fSfcBsxZsjauBAyldqp+8FQUM/dZHm+ts/jR4AFoJhCqxy8K10Jrf3pojfsbq7fAPTb1XaVkg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style type="text/css">
+        body {
+            padding: 10vh 10vh;
+        }
+
+        .btn-desc {
+            color: grey
+        }
+
+        /*Line styling for differentiating new and old expressions*/
+        #line {
+            width: 100%;
+            margin: 20px 0;
+            height: 300px;
+        }
+
+        .old {
+            stroke: lightblue;
+            stroke-dasharray: 2;
+            stroke-dashoffset: 5;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Providing user with options to toggle various facial expression -->
+    <div class="btn-desc">Click on the buttons below to generate corresponding facial expression</div><br>
+    <button onclick="plotExpression('happy')">Happy 🙂</button>
+    <button onclick="plotExpression('sad')">Sad 🙁</button>
+    <button onclick="plotExpression('smirk')">Smirk 😏</button>
+    <!-- This helps to toggle old curves when a new one is being plotted after this option is toggled -->
+    <button class="toggleBtn" onclick="toggleOldLine()"></button>
+    <hr><br>
+    <!-- Container to plot the curves -->
+    <div id="line"></div>
+</body>
+
+<script type="text/javascript">
+
+    var w = 500;
+    var h = 100;
+    var showOldLine = false;
+
+    var svg = d3.select("#line")
+        .append("svg")
+        .attr("width", w)
+        .attr("height", h)
+        .attr("id", "visualization");
+
+    var x = d3.scaleLinear().domain([0, 1000]).range([0, w]);
+    var y = d3.scaleLinear().domain([0, 1000]).range([10, h - 10]);
+
+
+    var line = d3.line()
+        .x(function (d, i) { return x(d[0]); })
+        .y(function (d) { return y(d[1]); })
+        .curve(d3.curveMonotoneX)
+
+
+    // Function to plot the curves corresponding to expression
+    let plotExpression = (exp) => {
+
+        // Hardcoded data just to depict some curves corresponding to an expression
+        var currentExpression = [];
+
+        var expressionData = {
+            happy: [
+                [50, 100],
+                [125, 200],
+                [200, 100]
+            ], sad: [
+                [50, 100],
+                [125, 0],
+                [200, 100]
+            ],
+            smirk: [
+                [50, 100],
+                [75, 150],
+                [150, 100],
+                [201, -50],
+            ]
+        }
+
+        //If a particular expression is selected by user, then plot that, else plot happy expression by default
+        exp ? currentExpression = expressionData[exp] : expressionData['happy'];
+
+        // Uncomment following line to clear the previously drawn line
+        showOldLine ? svg.selectAll("path").remove() : null;
+
+        // Set a light grey class on old paths
+        svg.selectAll("path").attr("class", "old");
+
+        // Plot the default curve path
+        var path = svg.append("path")
+            .attr("d", line(currentExpression))
+            .attr("stroke", "blue")
+            .attr("stroke-width", "2")
+            .attr("fill", "none");
+
+        // Get the total length of path based on data points to be plotted    
+        var totalLength = path.node().getTotalLength();
+
+        // Plot the actual curve based on incoming data
+        path
+            .attr("stroke-dasharray", totalLength + " " + totalLength)
+            .attr("stroke-dashoffset", totalLength)
+            .transition()
+            .duration(1500)
+            .ease(d3.easeSin)
+            .attr("stroke-dashoffset", 0)
+    };
+
+    //Plot a default expression on page startup and set default toggle state to hide old lines
+    plotExpression('happy');
+    toggleOldLine();
+
+    //Function to toggle display status of previous curves
+    function toggleOldLine() {
+        showOldLine = !showOldLine;
+        document.getElementsByClassName("toggleBtn")[0].innerText = showOldLine ? 'Show old lines' : 'Hide old lines';
+    };
+
+</script>
+
+</html>
